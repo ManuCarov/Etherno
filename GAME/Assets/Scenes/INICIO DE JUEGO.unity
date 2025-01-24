@@ -377,7 +377,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 154118322}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 04842faf4c98eb04ab978b6be5ce1850, type: 3}
+  m_Script: {fileID: 11500000, guid: 01adc4f2d330c5146ac7edc2ce2994be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &163789487
@@ -1363,7 +1363,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 1.5, y: -3.7276764}
+  m_AnchoredPosition: {x: 1.5, y: -3.7276611}
   m_SizeDelta: {x: 3, y: 7.455368}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1329490751
@@ -1848,8 +1848,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 154118328}
-        m_TargetAssemblyTypeName: MenuInicial, Assembly-CSharp
-        m_MethodName: jugar
+        m_TargetAssemblyTypeName: Menudeinicio, Assembly-CSharp
+        m_MethodName: Jugar
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2060,7 +2060,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 154118328}
-        m_TargetAssemblyTypeName: MenuInicial, Assembly-CSharp
+        m_TargetAssemblyTypeName: Menudeinicio, Assembly-CSharp
         m_MethodName: Salir
         m_Mode: 1
         m_Arguments:
