@@ -17,7 +17,7 @@ MonoBehaviour:
   m_Subtarget: 0
   m_PlatformId: 00000000000000000000000000000000
   m_PlatformBuildProfile:
-    rid: 160183835345027074
+    rid: 6782497453324369922
   m_OverrideGlobalSceneList: 0
   m_Scenes: []
   m_ScriptingDefines: []
@@ -26,7 +26,7 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 160183835345027074
+    - rid: 6782497453324369922
       type: {class: SharedPlatformSettings, ns: UnityEditor.Build.Profile, asm: UnityEditor.CoreModule}
       data:
         m_Development: 0
