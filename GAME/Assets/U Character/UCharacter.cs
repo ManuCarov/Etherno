@@ -11,15 +11,18 @@ public class UCharacter : MonoBehaviour
 
     int isWalkingHash;
     int isRunningHash;
+    int isAttackingHash;
+    int isJumpingHash;
 
     Vector2 currentMovementInput;
     Vector3 currentMovement;
     Vector3 currentRunMovement;
-    bool isMovementPreesed;
+    bool isMovementPressed;
     bool isRunPressed;
+    bool isAttackPressed;  // To track attack input
     float rotationFactorPerFrame = 15.0f;
     float walkMultiplier = 2.0f;  // Introduce a walk speed multiplier (default to 1.5)
-    float runMultiplayer = 4.0f;  // Keep the same run speed multiplier
+    float runMultiplier = 4.0f;  // Keep the same run speed multiplier
 
     float gravity = -9.8f;
     float groundedGravity = -.05f;
@@ -29,7 +32,6 @@ public class UCharacter : MonoBehaviour
     float maxJumpHeight = 1.5f;
     float maxJumpTime = 0.75f;
     bool isJumping = false;
-    int isJumpingHash;
     bool isJumpingAnimating = false;
 
     void Awake()
@@ -40,6 +42,7 @@ public class UCharacter : MonoBehaviour
 
         isWalkingHash = Animator.StringToHash("isWalking");
         isRunningHash = Animator.StringToHash("isRunning");
+        isAttackingHash = Animator.StringToHash("isAttacking");
         isJumpingHash = Animator.StringToHash("isJumping");
 
         playerInput.CharacterControls.Move.started += onMovementInput;
@@ -49,18 +52,20 @@ public class UCharacter : MonoBehaviour
         playerInput.CharacterControls.Run.canceled += OnRun;
         playerInput.CharacterControls.Jump.started += OnJump;
         playerInput.CharacterControls.Jump.canceled += OnJump;
+        playerInput.CharacterControls.Attack.started += OnAttack;
+        playerInput.CharacterControls.Attack.canceled += OnAttack;
 
         setupJumpVariables();
     }
 
-    void setupJumpVariables() 
+    void setupJumpVariables()
     {
         float timeToApex = maxJumpTime / 2;
         gravity = (-2 * maxJumpHeight) / Mathf.Pow(timeToApex, 2);
         initialJumpVelocity = (2 * maxJumpHeight / timeToApex);
     }
 
-    void handleJumping() 
+    void handleJumping()
     {
         if (!isJumping && characterController.isGrounded && isJumpPressed)
         {
@@ -69,14 +74,13 @@ public class UCharacter : MonoBehaviour
             currentMovement.y = initialJumpVelocity * .8f;
             currentRunMovement.y = initialJumpVelocity * .8f;
         }
-        else if (!isJumpPressed && isJumping && characterController.isGrounded) 
+        else if (!isJumpPressed && isJumping && characterController.isGrounded)
         {
             isJumping = false;
-        
         }
     }
 
-    void OnJump(InputAction.CallbackContext context) 
+    void OnJump(InputAction.CallbackContext context)
     {
         isJumpPressed = context.ReadValueAsButton();
     }
@@ -86,6 +90,11 @@ public class UCharacter : MonoBehaviour
         isRunPressed = context.ReadValueAsButton();
     }
 
+    void OnAttack(InputAction.CallbackContext context)
+    {
+        isAttackPressed = context.ReadValueAsButton();
+    }
+
     void onMovementInput(InputAction.CallbackContext context)
     {
         currentMovementInput = context.ReadValue<Vector2>();
@@ -93,10 +102,10 @@ public class UCharacter : MonoBehaviour
         currentMovement.z = currentMovementInput.y * walkMultiplier;  // Apply walking multiplier
 
         // Adjust for running (run multiplier should override walk multiplier when running)
-        currentRunMovement.x = currentMovementInput.x * runMultiplayer;
-        currentRunMovement.z = currentMovementInput.y * runMultiplayer;
+        currentRunMovement.x = currentMovementInput.x * runMultiplier;
+        currentRunMovement.z = currentMovementInput.y * runMultiplier;
 
-        isMovementPreesed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
+        isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
     }
 
     void handleGravity()
@@ -106,18 +115,16 @@ public class UCharacter : MonoBehaviour
 
         if (characterController.isGrounded)
         {
-            if (isJumpingAnimating) 
+            if (isJumpingAnimating)
             {
                 animator.SetBool(isJumpingHash, false);
                 isJumpingAnimating = false;
             }
-          
-           
+
             currentMovement.y = groundedGravity;
             currentRunMovement.y = groundedGravity;
         }
-
-        else if (isFalling) 
+        else if (isFalling)
         {
             float previousYVelocity = currentMovement.y;
             float newYVelocity = currentMovement.y + (gravity * fallMultiplier * Time.deltaTime);
@@ -125,22 +132,23 @@ public class UCharacter : MonoBehaviour
             currentMovement.y = nextYVelocity;
             currentRunMovement.y = nextYVelocity;
         }
-
-        else 
+        else
         {
-           float previousYVelocity = currentMovement.y;
-           float newYVelocity = currentRunMovement.y + (gravity * Time.deltaTime);
+            float previousYVelocity = currentMovement.y;
+            float newYVelocity = currentRunMovement.y + (gravity * Time.deltaTime);
             float nextYVelocity = (previousYVelocity + newYVelocity) * .5f;
 
             currentMovement.y = nextYVelocity;
             currentRunMovement.y = nextYVelocity;
         }
-
-        
     }
 
     void HandleRotation()
     {
+        // Skip rotation when attacking
+        bool isAttacking = animator.GetBool(isAttackingHash);
+        if (isAttacking) return;
+
         Vector3 positionToLookAt;
         positionToLookAt.x = currentMovement.x;
         positionToLookAt.y = 0.0f;
@@ -148,7 +156,7 @@ public class UCharacter : MonoBehaviour
 
         Quaternion currentRotation = transform.rotation;
 
-        if (isMovementPreesed)
+        if (isMovementPressed)
         {
             Quaternion targetRotation = Quaternion.LookRotation(positionToLookAt);
             transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, rotationFactorPerFrame * Time.deltaTime);
@@ -160,30 +168,53 @@ public class UCharacter : MonoBehaviour
         bool isWalking = animator.GetBool(isWalkingHash);
         bool isRunning = animator.GetBool(isRunningHash);
 
-        if (isMovementPreesed && !isWalking)
+        if (isMovementPressed && !isWalking)
         {
             animator.SetBool(isWalkingHash, true);
         }
-        else if (!isMovementPreesed && isWalking)
+        else if (!isMovementPressed && isWalking)
         {
             animator.SetBool(isWalkingHash, false);
         }
 
-        if ((isMovementPreesed && isRunPressed) && !isRunning)
+        if ((isMovementPressed && isRunPressed) && !isRunning)
         {
             animator.SetBool(isRunningHash, true);
         }
-        else if ((!isMovementPreesed || !isRunPressed) && isRunning)
+        else if ((!isMovementPressed || !isRunPressed) && isRunning)
         {
             animator.SetBool(isRunningHash, false);
         }
     }
 
+    void handleAttacking()
+    {
+        bool isAttacking = animator.GetBool(isAttackingHash);
+
+        // If the attack button is pressed and the character is not already attacking
+        if (isAttackPressed && !isAttacking)
+        {
+            animator.SetBool(isAttackingHash, true);  // Trigger attack animation
+        }
+        else if (!isAttackPressed && isAttacking)  // If attack button is released, stop the animation
+        {
+            animator.SetBool(isAttackingHash, false);
+        }
+
+        // Disable movement while attacking
+        if (isAttacking)
+        {
+            currentMovement = Vector3.zero;
+            currentRunMovement = Vector3.zero;
+        }
+    }
+
     void Update()
     {
+        handleAttacking();  // Call handleAttacking before movement
+
         HandleRotation();
         handleAnimation();
-        
 
         // Move the character with the appropriate speed based on whether running is active
         if (isRunPressed)
